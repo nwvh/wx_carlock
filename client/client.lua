@@ -140,9 +140,9 @@ end
 Citizen.CreateThread(function ()
 		while true do
 			Wait(0)
-			if IsPedInAnyVehicle(PlayerPedId(),false) and GetVehicleDoorLockStatus(GetVehiclePedIsIn(PlayerPedId(),false)) == 2 then
+			if IsPedInAnyVehicle(ped,false) and GetVehicleDoorLockStatus(GetVehiclePedIsIn(ped,false)) == 2 then
 				DisableControlAction(0,75,true)
-			elseif not IsPedInAnyVehicle(PlayerPedId(),false) then
+			elseif not IsPedInAnyVehicle(ped,false) then
 				EnableControlAction(0,75,true)
 			else
 				EnableControlAction(0,75,true)
