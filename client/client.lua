@@ -1,6 +1,5 @@
 ESX = exports["es_extended"]:getSharedObject()
 local ped = PlayerPedId()
-local x,y,z = table.unpack(GetEntityCoords(ped))
 -- Ox_Target stuff
 
 local options =     {
@@ -18,6 +17,8 @@ if wx.targetSupport then exports.ox_target:addGlobalVehicle(options) end
 
 function ToggleLock()
 	local vehicle
+	local x,y,z = table.unpack(GetEntityCoords(ped))
+
 
 
 	if IsPedInAnyVehicle(ped, false) then
@@ -25,7 +26,6 @@ function ToggleLock()
 	else
 		vehicle = GetClosestVehicle(x,y,z, wx.checkRadius, 0, 71)
 	end
-
 	if not DoesEntityExist(vehicle) then
 		if wx.Notifications.NoNearbyVehicles then
 			lib.notify({
@@ -147,24 +147,6 @@ Citizen.CreateThread(function ()
 			else
 				EnableControlAction(0,75,true)
 			end
-
-			-- If player is trying to exit the locked vehicle, show an error notification
-			if IsDisabledControlJustPressed(0,75) then
-				lib.notify({
-					title = wx.Locale["NotifyTitle"],
-					description = wx.Locale["LockedWhileInside"],
-					position = 'top',
-					style = {
-						backgroundColor = '#1E1E2E',
-						color = '#C1C2C5',
-						['.description'] = {
-						color = '#909296'
-						}
-					},
-					icon = 'triangle-exclamation',
-					iconColor = '#f38ba8'
-				})		
-			end
 		end
 end)
 
@@ -174,4 +156,3 @@ RegisterCommand('carlock',function ()
 	ToggleLock()
 end,false)
 RegisterKeyMapping('carlock', 'Lock or Unlock your personal vehicle', 'keyboard', 'l')
--- PlaySoundFrontend(-1, "BUTTON", "MP_PROPERTIES_ELEVATOR_DOORS", 1)
