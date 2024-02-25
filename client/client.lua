@@ -3,12 +3,122 @@ ESX = exports["es_extended"]:getSharedObject()
 -- Ox_Target stuff
 
 local options =     {
-	name = 'wx_carlock:target',
-	icon = wx.targetIcon,
-	label = wx.Locale["TargetLabel"],
-	onSelect = function(data)
-		ToggleLock(data.entity)
-	end
+	{
+		name = 'wx_carlock:target',
+		icon = wx.targetIcon,
+		label = wx.Locale["TargetLabel"],
+		onSelect = function(data)
+			ToggleLock(data.entity)
+		end
+	},
+	{
+		name = 'wx_carlock:share',
+		icon = "fa-solid fa-key",
+		label = "Manage Keys",
+		onSelect = function(data)
+			lib.registerContext(
+			    {
+			        id = "manage_keys",
+			        title = "Key Management",
+			        options = {
+			            {
+			                title = "Share Keys",
+			                icon = "key",
+			                onSelect = function()
+			                    ESX.TriggerServerCallback('wx_carlock:getVeh', function(Owned)
+									if Owned == "shared" then
+										lib.notify({
+											title = wx.Locale["NotifyTitle"],
+											description = "You cannot access this menu with shared keys",
+											position = 'top',
+											style = {
+												backgroundColor = '#1E1E2E',
+												color = '#C1C2C5',
+												['.description'] = {
+												color = '#909296'
+												}
+											},
+											icon = 'triangle-exclamation',
+											iconColor = '#f38ba8'
+										})
+									end
+
+									if Owned == true then
+										local opt = {}
+										for k,v in pairs(GetActivePlayers()) do
+											table.insert(opt,{
+												value = GetPlayerServerId(v), label = ('[%s] %s'):format(GetPlayerServerId(v),GetPlayerName(v))
+											})
+										end
+										local player = lib.inputDialog("Choose player", {
+											{
+												type = 'select',
+												label = "Player you want to share the keys to",
+												icon = "person",
+												options = opt
+											},
+										})
+										if player then
+											lib.callback.await('wx_carlock:shareKeys', 250, player[1],GetVehicleNumberPlateText(data.entity))
+										end
+									end
+							
+								end, ESX.Math.Trim(GetVehicleNumberPlateText(data.entity)))
+			                end
+			            },
+			            {
+			                title = "Remove Shared Keys",
+			                icon = "trash-alt",
+			                onSelect = function()
+								local keys = lib.callback.await('wx_carlock:getSharedKeys', 250, GetVehicleNumberPlateText(data.entity))
+								local opt = {}
+								if #keys == 0 then
+									opt = {
+										{
+											title = "You haven't shared your keys with anyone yet.",
+											disabled = true
+										}
+									}
+								else
+									for k,v in pairs(keys) do
+										table.insert(opt,{
+											
+												title = ("[%s] %s"):format(v.id,v.player),
+												description = ("Plate: %s"):format(v.plate),
+												icon = "trash-alt",
+												onSelect = function ()
+													local confirm =
+														lib.alertDialog(
+														{
+															header = "Confirmation",
+															content = ("Are you sure you want to remove keys for %s from %s"):format(v.plate,v.player),
+															centered = true,
+															cancel = true
+														}
+													)
+													if confirm == "confirm" then
+														lib.callback.await('wx_carlock:removeKeys', 250, v.id,v.plate)				
+													end
+													
+												end
+											
+										})
+									end
+								end
+								lib.registerContext({
+									id = "remove_options",
+									title = "Select Player",
+									options = opt
+								})
+								lib.showContext("remove_options")
+			                end
+			            }
+			        }
+			    }
+			)
+			lib.showContext("manage_keys")
+		end
+	},
 }
 
 if wx.targetSupport then exports.ox_target:addGlobalVehicle(options) end
@@ -65,7 +175,7 @@ function ToggleLock(entity)
 
 	ESX.TriggerServerCallback('wx_carlock:getVeh', function(Owned)
 
-		if Owned then
+		if Owned or Owned == "shared" then
 			local lockStatus = GetVehicleDoorLockStatus(vehicle)
 
 			if lockStatus == 1 then -- Vehicle is unlocked

@@ -7,7 +7,7 @@ description 'Simple car-locking script for ESX with ox_target support and ox_lib
 version '1.5.0'
 
 server_script {
-	'@mysql-async/lib/MySQL.lua',
+	"@oxmysql/lib/MySQL.lua",
 	'server/*.lua'
 }
 
